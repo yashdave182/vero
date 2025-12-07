@@ -1,0 +1,109 @@
+.signature-pad-container {
+    margin-bottom: var(--space-5);
+}
+
+.signature-pad-label {
+    display: block;
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--space-2);
+}
+
+.signature-pad-wrapper {
+    position: relative;
+    width: 100%;
+    height: 200px;
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    background: #ffffff;
+    overflow: hidden;
+    transition: all var(--transition-fast);
+}
+
+.signature-pad-wrapper:hover {
+    border-color: var(--border-medium);
+}
+
+.signature-pad-wrapper:focus-within {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.signature-pad-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    cursor: crosshair;
+    touch-action: none;
+}
+
+.signature-pad-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+    color: var(--text-muted);
+    pointer-events: none;
+    user-select: none;
+}
+
+.signature-pad-placeholder span {
+    font-size: var(--font-size-sm);
+}
+
+.signature-pad-clear {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-top: var(--space-3);
+    padding: var(--space-2) var(--space-4);
+    font-size: var(--font-size-sm);
+    font-weight: 500;
+    color: #ef4444;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: var(--radius-md);
+    transition: all var(--transition-fast);
+}
+
+.signature-pad-clear:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
+.signature-pad-clear svg {
+    flex-shrink: 0;
+}
+
+.signature-pad-hint {
+    font-size: var(--font-size-xs);
+    color: var(--text-muted);
+    margin-top: var(--space-2);
+}
+
+/* Mobile optimization */
+@media (max-width: 768px) {
+    .signature-pad-wrapper {
+        height: 180px;
+    }
+}
+
+/* Disable text selection while drawing */
+.signature-pad-canvas:active {
+    cursor: crosshair;
+}
+
+/* Smooth drawing on touch devices */
+.signature-pad-canvas {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+}

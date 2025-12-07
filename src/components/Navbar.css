@@ -1,0 +1,139 @@
+.navbar {
+    position: fixed;
+
+    top: 0;
+
+    left: 0;
+
+    right: 0;
+
+    z-index: 100;
+
+    background: rgba(255, 255, 255, 0.85);
+
+    backdrop-filter: blur(12px);
+
+    border-bottom: 1px solid var(--border-light);
+
+    box-shadow: var(--shadow-sm);
+}
+
+.navbar-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: var(--max-width);
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-6);
+}
+
+.navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.logo-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.logo-text {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: -0.02em;
+}
+
+.navbar-links {
+    display: flex;
+    align-items: center;
+    gap: var(--space-8);
+}
+
+.nav-link {
+    font-size: var(--font-size-sm);
+
+    font-weight: 500;
+
+    color: var(--text-secondary);
+
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-md);
+    transition:
+        color var(--transition-fast),
+        background var(--transition-fast);
+
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--text-primary);
+
+    background: var(--bg-gray);
+}
+
+.nav-link:focus-visible {
+    outline: none;
+    color: var(--text-primary);
+    background: var(--bg-gray);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.nav-link.active {
+    color: var(--text-primary);
+    background: var(--bg-gray);
+}
+
+.nav-link.active::after {
+    content: "";
+    position: absolute;
+    bottom: -12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    border-radius: var(--radius-full);
+    background: var(--color-primary);
+}
+
+.navbar-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+
+.navbar-mobile-toggle {
+    display: none;
+
+    padding: var(--space-3);
+    color: var(--text-primary);
+
+    border-radius: var(--radius-lg);
+    touch-action: manipulation;
+}
+
+.navbar-mobile-toggle:hover {
+    background: var(--bg-gray);
+}
+
+.navbar-mobile-toggle:active {
+    background: var(--border-light);
+}
+
+.navbar-mobile-toggle:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+@media (max-width: 768px) {
+    .navbar-links,
+    .navbar-actions {
+        display: none;
+    }
+
+    .navbar-mobile-toggle {
+        display: flex;
+    }
+}
