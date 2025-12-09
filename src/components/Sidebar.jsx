@@ -135,40 +135,14 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-header">
         <div className="sidebar-logo">
-          <svg
-            width="32"
-            height="32"
-            viewBox="0 0 28 28"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <rect width="28" height="28" rx="8" fill="url(#gradient-sidebar)" />
-
-            <path
-              d="M8 14L12 18L20 10"
-              stroke="white"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-
-            <defs>
-              <linearGradient
-                id="gradient-sidebar"
-                x1="0"
-                y1="0"
-                x2="28"
-                y2="28"
-                gradientUnits="userSpaceOnUse"
-              >
-                <stop stopColor="#2563EB" />
-
-                <stop offset="1" stopColor="#0D9488" />
-              </linearGradient>
-            </defs>
-          </svg>
-
-          <span className="sidebar-brand">Verolabz</span>
+          <img
+            src="/vero_logo.jpg"
+            alt="Verolabz Logo"
+            width="40"
+            height="40"
+            style={{ borderRadius: "8px" }}
+          />
+          <span style={{ fontSize: "18px", fontWeight: 700 }}>Verolabz</span>
         </div>
       </div>
 

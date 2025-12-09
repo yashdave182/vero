@@ -95,40 +95,13 @@ export default function SignUp() {
         <div className="auth-card">
           <div className="auth-header">
             <Link to="/" className="auth-logo">
-              <svg
-                width="40"
-                height="40"
-                viewBox="0 0 28 28"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <rect
-                  width="28"
-                  height="28"
-                  rx="8"
-                  fill="url(#gradient-auth2)"
-                />
-                <path
-                  d="M8 14L12 18L20 10"
-                  stroke="white"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <defs>
-                  <linearGradient
-                    id="gradient-auth2"
-                    x1="0"
-                    y1="0"
-                    x2="28"
-                    y2="28"
-                    gradientUnits="userSpaceOnUse"
-                  >
-                    <stop stopColor="#2563EB" />
-                    <stop offset="1" stopColor="#0D9488" />
-                  </linearGradient>
-                </defs>
-              </svg>
+              <img
+                src="/vero_logo.jpg"
+                alt="Verolabz Logo"
+                width="50"
+                height="50"
+                style={{ borderRadius: "8px" }}
+              />
             </Link>
             <h1 className="auth-title">Create your account</h1>
             <p className="auth-subtitle">

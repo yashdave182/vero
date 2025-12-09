@@ -8,35 +8,13 @@ export default function Navbar() {
       <div className="navbar-container">
         <Link to="/" className="navbar-logo">
           <div className="logo-icon">
-            <svg
-              width="28"
-              height="28"
-              viewBox="0 0 28 28"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <rect width="28" height="28" rx="8" fill="url(#gradient)" />
-              <path
-                d="M8 14L12 18L20 10"
-                stroke="white"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-              <defs>
-                <linearGradient
-                  id="gradient"
-                  x1="0"
-                  y1="0"
-                  x2="28"
-                  y2="28"
-                  gradientUnits="userSpaceOnUse"
-                >
-                  <stop stopColor="#2563EB" />
-                  <stop offset="1" stopColor="#0D9488" />
-                </linearGradient>
-              </defs>
-            </svg>
+            <img
+              src="/vero_logo.jpg"
+              alt="Verolabz Logo"
+              width="40"
+              height="40"
+              style={{ borderRadius: "8px" }}
+            />
           </div>
           <span className="logo-text">Verolabz</span>
         </Link>
