@@ -13,7 +13,7 @@ export default function Navbar() {
               alt="Verolabz Logo"
               width="40"
               height="40"
-              style={{ borderRadius: "8px" }}
+              style={{ borderRadius: "8px", border: "2px solid #2563EB" }}
             />
           </div>
           <span className="logo-text">Verolabz</span>

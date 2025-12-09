@@ -13,7 +13,7 @@ export default function Footer() {
                 alt="Verolabz Logo"
                 width="32"
                 height="32"
-                style={{ borderRadius: "8px" }}
+                style={{ borderRadius: "8px", border: "2px solid #2563EB" }}
               />
             </div>
             <span>Verolabz</span>

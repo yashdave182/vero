@@ -100,7 +100,7 @@ export default function SignUp() {
                 alt="Verolabz Logo"
                 width="50"
                 height="50"
-                style={{ borderRadius: "8px" }}
+                style={{ borderRadius: "8px", border: "2px solid #2563EB" }}
               />
             </Link>
             <h1 className="auth-title">Create your account</h1>

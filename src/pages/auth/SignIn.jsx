@@ -75,7 +75,7 @@ export default function SignIn() {
                 alt="Verolabz Logo"
                 width="50"
                 height="50"
-                style={{ borderRadius: "8px" }}
+                style={{ borderRadius: "8px", border: "2px solid #2563EB" }}
               />
             </Link>
             <h1 className="auth-title">Welcome back</h1>

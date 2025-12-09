@@ -140,7 +140,7 @@ export default function Sidebar() {
             alt="Verolabz Logo"
             width="40"
             height="40"
-            style={{ borderRadius: "8px" }}
+            style={{ borderRadius: "8px", border: "2px solid #2563EB" }}
           />
           <span style={{ fontSize: "18px", fontWeight: 700 }}>Verolabz</span>
         </div>
