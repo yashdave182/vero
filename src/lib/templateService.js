@@ -53,6 +53,24 @@ export const checkAPIHealth = async () => {
  */
 export const generateResume = async (profileData) => {
   try {
+    // Normalize skills - handle both array and comma-separated string
+    let skills = profileData.skills || [];
+    if (typeof skills === "string") {
+      skills = skills
+        .split(",")
+        .map((s) => s.trim())
+        .filter((s) => s);
+    }
+
+    // Ensure projects have proper structure
+    const projects = (profileData.projects || []).map((proj) => ({
+      name: proj.name || "",
+      description: proj.description || "",
+      technologies: proj.technologies || proj.tech || [],
+      liveUrl: proj.liveUrl || "",
+      githubUrl: proj.githubUrl || "",
+    }));
+
     const payload = {
       personal_info: {
         name: profileData.name || profileData.displayName || "",
@@ -65,11 +83,25 @@ export const generateResume = async (profileData) => {
       summary: profileData.bio || profileData.summary || "",
       experience: profileData.experience || [],
       education: profileData.education || [],
-      skills: profileData.skills || [],
+      skills: skills,
       certifications: profileData.certifications || [],
-      projects: profileData.projects || [],
+      projects: projects,
       enhance_with_ai: profileData.enhanceWithAI || false,
     };
+
+    // Debug logging
+    console.log("=== RESUME GENERATION DEBUG ===");
+    console.log("Profile Data received:", profileData);
+    console.log(
+      "Payload being sent to backend:",
+      JSON.stringify(payload, null, 2),
+    );
+    console.log("Number of projects:", payload.projects?.length || 0);
+    console.log("Projects data:", payload.projects);
+    console.log("Skills data:", payload.skills);
+    console.log("Summary/Bio:", payload.summary);
+    console.log("AI Enhancement enabled:", payload.enhance_with_ai);
+    console.log("================================");
 
     const response = await fetch(`${API_BASE_URL}/generate-resume`, {
       method: "POST",

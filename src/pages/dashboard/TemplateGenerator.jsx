@@ -5,6 +5,7 @@ import "./TemplateGenerator.css";
 import { useTemplate } from "../../hooks/useTemplates";
 import { useUser } from "../../lib/authContext";
 import { useUserProfile } from "../../hooks/useUserProfile";
+import { getPortfolio } from "../../lib/portfolioService";
 import {
   generateResume,
   generateCoverLetter,
@@ -16,7 +17,7 @@ import {
 } from "../../lib/templateService";
 
 export default function TemplateGenerator() {
-  const { templateId } = useParams();
+  const templateId = useParams().templateId;
   const navigate = useNavigate();
   const { user } = useUser();
   const { profile } = useUserProfile(user?.uid);
@@ -26,8 +27,23 @@ export default function TemplateGenerator() {
   const [generating, setGenerating] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+  const [portfolio, setPortfolio] = useState(null);
+  const [showDebug, setShowDebug] = useState(false);
 
-  // Pre-fill form with user profile data
+  // Load portfolio data
+  useEffect(() => {
+    const loadPortfolio = async () => {
+      if (user?.uid) {
+        const result = await getPortfolio(user.uid);
+        if (result.success) {
+          setPortfolio(result.data);
+        }
+      }
+    };
+    loadPortfolio();
+  }, [user?.uid]);
+
+  // Pre-fill form with user profile and portfolio data
   useEffect(() => {
     if (profile && templateId) {
       const prefillData = {};
@@ -36,26 +52,29 @@ export default function TemplateGenerator() {
         prefillData.name = profile.displayName || "";
         prefillData.email = profile.email || "";
         prefillData.phone = profile.phone || "";
-        prefillData.bio = profile.bio || "";
-        prefillData.skills = profile.skills || [];
+        prefillData.bio = portfolio?.bio || profile.bio || "";
+        prefillData.skills = portfolio?.skills || profile.skills || [];
         prefillData.experience = profile.experience || [];
         prefillData.education = profile.education || [];
-        prefillData.projects = profile.projects || [];
+        prefillData.projects = portfolio?.projects || [];
         prefillData.location = profile.location || "";
-        prefillData.linkedin = profile.socials?.linkedin || "";
-        prefillData.website = profile.website || "";
-        prefillData.enhanceWithAI = true;
+        prefillData.linkedin =
+          portfolio?.socials?.linkedin || profile.socials?.linkedin || "";
+        prefillData.website =
+          portfolio?.socials?.website || profile.website || "";
+        prefillData.title = portfolio?.title || "";
+        prefillData.enhanceWithAI = false;
       } else if (templateId === "cover-letter") {
         prefillData.name = profile.displayName || "";
         prefillData.email = profile.email || "";
         prefillData.phone = profile.phone || "";
-        prefillData.skills = profile.skills || [];
+        prefillData.skills = portfolio?.skills || profile.skills || [];
         prefillData.generateWithAI = true;
       }
 
       setFormData(prefillData);
     }
-  }, [profile, templateId]);
+  }, [profile, portfolio, templateId]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -147,7 +166,10 @@ export default function TemplateGenerator() {
           <div className="error-container">
             <h2>Template Not Found</h2>
             <p>The requested template could not be found.</p>
-            <button onClick={() => navigate("/dashboard/templates")} className="btn btn-primary">
+            <button
+              onClick={() => navigate("/dashboard/templates")}
+              className="btn btn-primary"
+            >
               Back to Templates
             </button>
           </div>
@@ -161,8 +183,18 @@ export default function TemplateGenerator() {
       <Sidebar />
       <main className="template-generator-page">
         <div className="generator-header">
-          <button onClick={() => navigate("/dashboard/templates")} className="back-button">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button
+            onClick={() => navigate("/dashboard/templates")}
+            className="back-button"
+          >
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
             Back to Templates
@@ -178,7 +210,14 @@ export default function TemplateGenerator() {
 
         {error && (
           <div className="alert alert-error">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -192,7 +231,14 @@ export default function TemplateGenerator() {
 
         {success && (
           <div className="alert alert-success">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg
+              width="20"
+              height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            >
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
@@ -266,7 +312,9 @@ export default function TemplateGenerator() {
                     />
                     <span>Enhance content with AI</span>
                   </label>
-                  <p className="help-text">AI will improve descriptions and formatting</p>
+                  <p className="help-text">
+                    AI will improve descriptions and formatting
+                  </p>
                 </div>
               </>
             )}
@@ -355,7 +403,9 @@ export default function TemplateGenerator() {
                     />
                     <span>Generate content with AI</span>
                   </label>
-                  <p className="help-text">AI will create personalized cover letter content</p>
+                  <p className="help-text">
+                    AI will create personalized cover letter content
+                  </p>
                 </div>
               </>
             )}
@@ -635,6 +685,94 @@ export default function TemplateGenerator() {
           </div>
 
           <div className="actions-section">
+            {/* Debug Section */}
+            {(templateId === "resume" || templateId === "portfolio-pdf") && (
+              <div className="debug-section" style={{ marginBottom: "20px" }}>
+                <button
+                  type="button"
+                  onClick={() => setShowDebug(!showDebug)}
+                  className="btn btn-secondary"
+                  style={{
+                    width: "100%",
+                    marginBottom: "10px",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <span>🔍 Show Data Preview</span>
+                  <span>{showDebug ? "▼" : "▶"}</span>
+                </button>
+
+                {showDebug && (
+                  <div
+                    className="debug-content"
+                    style={{
+                      background: "#f5f5f5",
+                      border: "1px solid #ddd",
+                      borderRadius: "8px",
+                      padding: "15px",
+                      marginBottom: "15px",
+                      maxHeight: "400px",
+                      overflow: "auto",
+                      fontSize: "12px",
+                      fontFamily: "monospace",
+                    }}
+                  >
+                    <h4 style={{ marginTop: 0, color: "#333" }}>
+                      Portfolio Data (What will be sent):
+                    </h4>
+                    <div style={{ marginBottom: "10px" }}>
+                      <strong>Name:</strong> {formData.name || "(empty)"}
+                    </div>
+                    <div style={{ marginBottom: "10px" }}>
+                      <strong>Email:</strong> {formData.email || "(empty)"}
+                    </div>
+                    <div style={{ marginBottom: "10px" }}>
+                      <strong>Phone:</strong> {formData.phone || "(empty)"}
+                    </div>
+                    <div style={{ marginBottom: "10px" }}>
+                      <strong>Bio/Summary:</strong> {formData.bio || "(empty)"}
+                    </div>
+                    <div style={{ marginBottom: "10px" }}>
+                      <strong>Skills ({formData.skills?.length || 0}):</strong>
+                      <pre style={{ margin: "5px 0", whiteSpace: "pre-wrap" }}>
+                        {JSON.stringify(formData.skills, null, 2)}
+                      </pre>
+                    </div>
+                    <div style={{ marginBottom: "10px" }}>
+                      <strong>
+                        Projects ({formData.projects?.length || 0}):
+                      </strong>
+                      <pre style={{ margin: "5px 0", whiteSpace: "pre-wrap" }}>
+                        {JSON.stringify(formData.projects, null, 2)}
+                      </pre>
+                    </div>
+                    <div style={{ marginBottom: "10px" }}>
+                      <strong>
+                        Experience ({formData.experience?.length || 0}):
+                      </strong>
+                      <pre style={{ margin: "5px 0", whiteSpace: "pre-wrap" }}>
+                        {JSON.stringify(formData.experience, null, 2)}
+                      </pre>
+                    </div>
+                    <div style={{ marginBottom: "10px" }}>
+                      <strong>
+                        Education ({formData.education?.length || 0}):
+                      </strong>
+                      <pre style={{ margin: "5px 0", whiteSpace: "pre-wrap" }}>
+                        {JSON.stringify(formData.education, null, 2)}
+                      </pre>
+                    </div>
+                    <div style={{ marginBottom: "10px" }}>
+                      <strong>AI Enhancement:</strong>{" "}
+                      {formData.enhanceWithAI ? "✅ Enabled" : "❌ Disabled"}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <button
               onClick={handleGenerate}
               disabled={generating}
@@ -658,7 +796,14 @@ export default function TemplateGenerator() {
                 </>
               ) : (
                 <>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
@@ -669,7 +814,14 @@ export default function TemplateGenerator() {
             </button>
 
             <div className="info-box">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
                 <circle cx="12" cy="12" r="10" />
                 <line x1="12" y1="16" x2="12" y2="12" />
                 <line x1="12" y1="8" x2="12.01" y2="8" />
@@ -677,12 +829,14 @@ export default function TemplateGenerator() {
               <div>
                 <strong>How it works</strong>
                 <p>
-                  Fill in the required fields above. Click "Generate Document" to create your{" "}
-                  {template.name.toLowerCase()}. The document will be downloaded automatically.
+                  Fill in the required fields above. Click "Generate Document"
+                  to create your {template.name.toLowerCase()}. The document
+                  will be downloaded automatically.
                 </p>
                 {template.aiEnhancement && (
                   <p className="ai-info">
-                    ✨ AI enhancement is available for this template to improve content quality.
+                    ✨ AI enhancement is available for this template to improve
+                    content quality.
                   </p>
                 )}
               </div>

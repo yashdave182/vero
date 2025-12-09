@@ -121,18 +121,68 @@ def generate_resume():
         if not data:
             return jsonify({"error": "No data provided"}), 400
 
+        # Debug logging
+        print("=" * 80, file=sys.stderr)
+        print("RESUME GENERATION REQUEST", file=sys.stderr)
+        print("=" * 80, file=sys.stderr)
+        print(f"Personal Info: {data.get('personal_info', {})}", file=sys.stderr)
+        print(
+            f"Summary/Bio: {data.get('summary', 'EMPTY')[:100] if data.get('summary') else 'EMPTY'}",
+            file=sys.stderr,
+        )
+        print(f"Skills: {data.get('skills', [])}", file=sys.stderr)
+        print(f"Projects count: {len(data.get('projects', []))}", file=sys.stderr)
+        for idx, proj in enumerate(data.get("projects", [])):
+            print(
+                f"  Project {idx + 1}: {proj.get('name', 'Unknown')}", file=sys.stderr
+            )
+            print(
+                f"    Has description: {bool(proj.get('description'))}", file=sys.stderr
+            )
+            if proj.get("description"):
+                print(
+                    f"    Description length: {len(proj.get('description', ''))} chars",
+                    file=sys.stderr,
+                )
+        print(f"Experience count: {len(data.get('experience', []))}", file=sys.stderr)
+        print(f"Education count: {len(data.get('education', []))}", file=sys.stderr)
+        print(
+            f"Certifications count: {len(data.get('certifications', []))}",
+            file=sys.stderr,
+        )
+        print(f"AI Enhancement: {data.get('enhance_with_ai', False)}", file=sys.stderr)
+        print("=" * 80, file=sys.stderr)
+
         # Optional: Enhance descriptions with AI
         if data.get("enhance_with_ai", False):
             print("Enhancing resume content with AI...", file=sys.stderr)
 
             # Enhance professional summary
             if data.get("summary"):
+                original_summary = data.get("summary")
                 skills = data.get("skills", [])
                 if isinstance(skills, dict):
                     skills = [s for skill_list in skills.values() for s in skill_list]
-                data["summary"] = gemini_client.generate_skills_summary(
-                    skills, data.get("years_experience", 0)
-                )
+                try:
+                    enhanced_summary = gemini_client.generate_skills_summary(
+                        skills, data.get("years_experience", 0)
+                    )
+                    # Validate AI response
+                    if (
+                        enhanced_summary
+                        and len(enhanced_summary) > 20
+                        and "option" not in enhanced_summary.lower()
+                    ):
+                        data["summary"] = enhanced_summary
+                    else:
+                        print(
+                            f"Warning: Invalid AI summary, keeping original",
+                            file=sys.stderr,
+                        )
+                        data["summary"] = original_summary
+                except Exception as e:
+                    print(f"Error enhancing summary: {str(e)}", file=sys.stderr)
+                    data["summary"] = original_summary
 
             # Enhance work experience descriptions
             if data.get("experience"):
@@ -144,7 +194,15 @@ def generate_resume():
                                 enhanced = gemini_client.enhance_resume_description(
                                     resp, exp.get("title", "")
                                 )
-                                enhanced_resps.append(enhanced)
+                                # Validate AI response
+                                if (
+                                    enhanced
+                                    and len(enhanced) > 10
+                                    and "option" not in enhanced.lower()
+                                ):
+                                    enhanced_resps.append(enhanced)
+                                else:
+                                    enhanced_resps.append(resp)
                             except Exception as e:
                                 print(
                                     f"Error enhancing responsibility: {str(e)}",
@@ -158,10 +216,71 @@ def generate_resume():
                 for proj in data["projects"]:
                     if proj.get("description"):
                         try:
+                            original_desc = proj.get("description")
+                            print(
+                                f"Enhancing project: {proj.get('name', 'Unknown')}",
+                                file=sys.stderr,
+                            )
+                            print(
+                                f"Original description: {original_desc[:100]}...",
+                                file=sys.stderr,
+                            )
                             enhanced = gemini_client.enhance_portfolio_description(proj)
+
+                            # Validate AI response
+                            if not enhanced or len(enhanced) < 20:
+                                print(
+                                    f"Warning: AI returned short/empty response, keeping original",
+                                    file=sys.stderr,
+                                )
+                                enhanced = original_desc
+                            elif (
+                                "option" in enhanced.lower()
+                                or "choose" in enhanced.lower()
+                            ):
+                                print(
+                                    f"Warning: AI returned multiple options, keeping original",
+                                    file=sys.stderr,
+                                )
+                                enhanced = original_desc
+                            elif enhanced.count("\n\n") > 2:
+                                print(
+                                    f"Warning: AI returned multiple paragraphs, keeping original",
+                                    file=sys.stderr,
+                                )
+                                enhanced = original_desc
+
                             proj["description"] = enhanced
+                            print(
+                                f"Enhanced description: {enhanced[:100]}...",
+                                file=sys.stderr,
+                            )
                         except Exception as e:
                             print(f"Error enhancing project: {str(e)}", file=sys.stderr)
+                            # Keep original description on error
+
+        # Debug: Log final data before DOCX generation
+        print("-" * 80, file=sys.stderr)
+        print("FINAL DATA BEING SENT TO DOCX GENERATOR:", file=sys.stderr)
+        print(
+            f"Summary: {data.get('summary', 'EMPTY')[:100] if data.get('summary') else 'EMPTY'}",
+            file=sys.stderr,
+        )
+        print(f"Skills: {data.get('skills', [])}", file=sys.stderr)
+        print(f"Projects count: {len(data.get('projects', []))}", file=sys.stderr)
+        for idx, proj in enumerate(data.get("projects", [])):
+            print(
+                f"  Project {idx + 1}: {proj.get('name', 'Unknown')}", file=sys.stderr
+            )
+            print(
+                f"    Description: {proj.get('description', 'EMPTY')[:100]}",
+                file=sys.stderr,
+            )
+            print(
+                f"    Technologies: {proj.get('technologies', []) or proj.get('tech', [])}",
+                file=sys.stderr,
+            )
+        print("-" * 80, file=sys.stderr)
 
         # Generate DOCX
         print("Generating resume document...", file=sys.stderr)

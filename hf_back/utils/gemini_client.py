@@ -82,7 +82,27 @@ class GeminiClient:
                 safety_settings=self.safety_settings,
             )
 
-            return response.text
+            # Handle multi-part responses
+            if hasattr(response, "text"):
+                try:
+                    return response.text
+                except ValueError:
+                    # Fallback to parts if simple text access fails
+                    pass
+
+            # Extract text from parts
+            if response.candidates and len(response.candidates) > 0:
+                candidate = response.candidates[0]
+                if candidate.content and candidate.content.parts:
+                    text_parts = []
+                    for part in candidate.content.parts:
+                        if hasattr(part, "text"):
+                            text_parts.append(part.text)
+                    return "".join(text_parts)
+
+            # If all else fails, return empty string
+            print(f"Warning: Could not extract text from response", file=sys.stderr)
+            return ""
 
         except Exception as e:
             print(f"Error generating text: {str(e)}", file=sys.stderr)
@@ -99,22 +119,33 @@ class GeminiClient:
         Returns:
             Enhanced description
         """
-        prompt = f"""You are a professional resume writer. Enhance the following job description to be more impactful and achievement-focused.
+        prompt = f"""You are a professional resume writer. Enhance the following job responsibility for a resume.
 
 Role: {role}
 Original Description: {description}
 
-Requirements:
-- Use strong action verbs
-- Quantify achievements where possible
-- Focus on impact and results
-- Keep it concise (2-3 sentences)
-- Professional tone
-- Do not add fake numbers or achievements
+CRITICAL INSTRUCTIONS:
+1. Write ONLY the enhanced description - NO options, NO choices, NO explanations
+2. Do NOT include phrases like "Here are options" or "Choose one"
+3. Write ONE final bullet point or sentence
+4. Use strong action verbs (led, developed, implemented, optimized, etc.)
+5. Focus on impact and measurable results when information allows
+6. Keep it concise (1-2 sentences maximum)
+7. Professional tone
+8. Do NOT fabricate numbers or achievements not in the original
+9. Write in past tense for completed roles
 
-Enhanced Description:"""
+Write the enhanced description now (ONLY the text, nothing else):"""
 
-        return self.generate_text(prompt, temperature=0.5)
+        enhanced = self.generate_text(prompt, temperature=0.4)
+
+        # Clean up response
+        enhanced = enhanced.strip()
+        enhanced = enhanced.replace("**", "").replace("*", "")
+        enhanced = enhanced.replace("Enhanced Description:", "").strip()
+        enhanced = enhanced.lstrip("- ").lstrip("• ")
+
+        return enhanced
 
     def generate_cover_letter(self, data: Dict[str, Any]) -> str:
         """
@@ -252,31 +283,101 @@ Contract Terms:"""
 
         Args:
             project_data: Dictionary containing:
-                - title: Project title
+                - title/name: Project title
                 - description: Current description
-                - technologies: List of technologies used
+                - technologies/tech: List of technologies used
                 - role: Your role in the project
 
         Returns:
             Enhanced project description
         """
-        prompt = f"""Enhance this portfolio project description to be more compelling and professional:
+        # Handle both 'name' and 'title' field names
+        project_name = project_data.get("name") or project_data.get("title", "Project")
 
-Project: {project_data.get("title", "Project")}
-Current Description: {project_data.get("description", "")}
-Technologies: {", ".join(project_data.get("technologies", []))}
-Role: {project_data.get("role", "Developer")}
+        # Handle both 'tech' and 'technologies' field names
+        technologies = project_data.get("technologies") or project_data.get("tech", [])
+        if not technologies:
+            technologies = []
 
-Requirements:
-- Start with impact/achievement
-- Highlight technical skills
-- Mention problem solved
-- Keep concise (3-4 sentences)
-- Professional and engaging
+        # Get description
+        description = project_data.get("description", "")
 
-Enhanced Description:"""
+        # If description is empty, return empty to avoid generating fake content
+        if not description:
+            print(
+                f"Warning: No description for project '{project_name}', skipping AI enhancement",
+                file=sys.stderr,
+            )
+            return description
 
-        return self.generate_text(prompt, temperature=0.6)
+        prompt = f"""You are a professional resume writer. Enhance the following project description for a resume.
+
+Project Name: {project_name}
+Current Description: {description}
+Technologies Used: {", ".join(technologies) if technologies else "Not specified"}
+Your Role: {project_data.get("role", "Developer")}
+
+CRITICAL INSTRUCTIONS:
+1. Respond with ONLY the enhanced description text - NO options, NO choices, NO explanations
+2. Do NOT include phrases like "Here are options" or "Choose one"
+3. Do NOT include numbered lists or multiple versions
+4. Write ONE final, polished description in 2-4 sentences
+5. Use strong action verbs (developed, engineered, implemented, built)
+6. Quantify impact where the original description allows
+7. Highlight technical skills and problem-solving
+8. Keep it professional and concise
+9. Base it ONLY on information provided - do NOT invent features
+10. Write in past tense if project is complete, present tense if ongoing
+
+Write the enhanced description now (ONLY the description, nothing else):"""
+
+        enhanced = self.generate_text(prompt, temperature=0.4)
+
+        # Clean up the response - remove any unwanted formatting
+        enhanced = enhanced.strip()
+
+        # Remove common AI response patterns
+        unwanted_patterns = [
+            "Here are",
+            "Here's",
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "**Option",
+            "Choose one",
+            "Enhanced Description:",
+            "Final Description:",
+        ]
+
+        # If response contains multiple options, take only the first paragraph
+        if any(pattern.lower() in enhanced.lower() for pattern in unwanted_patterns):
+            print(
+                f"Warning: AI returned multiple options, extracting first valid description",
+                file=sys.stderr,
+            )
+            # Split by double newline or numbered list patterns
+            paragraphs = enhanced.split("\n\n")
+            for para in paragraphs:
+                # Skip headers and option labels
+                if not any(p.lower() in para.lower() for p in unwanted_patterns):
+                    if len(para.strip()) > 50:  # Must be substantial
+                        enhanced = para.strip()
+                        break
+
+        # Remove markdown formatting
+        enhanced = enhanced.replace("**", "").replace("*", "")
+        enhanced = enhanced.replace("> ", "")
+
+        # Remove option prefixes
+        import re
+
+        enhanced = re.sub(
+            r"^\*\*Option \d+.*?\*\*\s*", "", enhanced, flags=re.MULTILINE
+        )
+        enhanced = re.sub(r"^Option \d+.*?:\s*", "", enhanced, flags=re.MULTILINE)
+        enhanced = re.sub(r"^\d+\.\s*", "", enhanced)
+
+        return enhanced.strip()
 
     def generate_skills_summary(
         self, skills: List[str], experience_years: int = 0
@@ -291,21 +392,32 @@ Enhanced Description:"""
         Returns:
             Skills summary paragraph
         """
-        prompt = f"""Create a compelling professional summary for someone with:
+        prompt = f"""You are a professional resume writer. Create a compelling professional summary.
 
 Skills: {", ".join(skills)}
 Years of Experience: {experience_years if experience_years > 0 else "Entry-level"}
 
-Requirements:
-- 2-3 sentences
-- Highlight key strengths
-- Professional tone
-- Focus on value proposition
-- Do not exaggerate
+CRITICAL INSTRUCTIONS:
+1. Write ONLY the professional summary - NO options, NO choices, NO explanations
+2. Do NOT include phrases like "Here are options" or "Choose one"
+3. Write ONE final professional summary in 2-3 sentences
+4. Highlight key technical strengths
+5. Focus on value proposition
+6. Use professional tone
+7. Do NOT exaggerate or fabricate experience
+8. Write in third person or first person as appropriate for resume
 
-Professional Summary:"""
+Write the professional summary now (ONLY the summary text, nothing else):"""
 
-        return self.generate_text(prompt, temperature=0.6, max_tokens=300)
+        summary = self.generate_text(prompt, temperature=0.5, max_tokens=300)
+
+        # Clean up response
+        summary = summary.strip()
+        summary = summary.replace("**", "").replace("*", "")
+        summary = summary.replace("Professional Summary:", "").strip()
+        summary = summary.replace("Summary:", "").strip()
+
+        return summary
 
     def improve_text_quality(self, text: str, style: str = "professional") -> str:
         """

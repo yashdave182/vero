@@ -149,7 +149,7 @@ class DocxGenerator:
             doc.add_paragraph()  # Spacing
 
         # Work Experience
-        if data.get("experience"):
+        if data.get("experience") and len(data["experience"]) > 0:
             self._add_heading(doc, "WORK EXPERIENCE", level=1)
 
             for exp in data["experience"]:
@@ -186,7 +186,7 @@ class DocxGenerator:
                 doc.add_paragraph()  # Spacing between jobs
 
         # Education
-        if data.get("education"):
+        if data.get("education") and len(data["education"]) > 0:
             self._add_heading(doc, "EDUCATION", level=1)
 
             for edu in data["education"]:
@@ -223,7 +223,7 @@ class DocxGenerator:
                 doc.add_paragraph()  # Spacing
 
         # Skills
-        if data.get("skills"):
+        if data.get("skills") and len(data["skills"]) > 0:
             self._add_heading(doc, "SKILLS", level=1)
 
             # Group skills by category if provided
@@ -246,7 +246,7 @@ class DocxGenerator:
             doc.add_paragraph()  # Spacing
 
         # Certifications
-        if data.get("certifications"):
+        if data.get("certifications") and len(data["certifications"]) > 0:
             self._add_heading(doc, "CERTIFICATIONS", level=1)
 
             for cert in data["certifications"]:
@@ -264,8 +264,10 @@ class DocxGenerator:
                     date_run.font.size = Pt(10)
                     date_run.italic = True
 
+            doc.add_paragraph()  # Spacing
+
         # Projects
-        if data.get("projects"):
+        if data.get("projects") and len(data["projects"]) > 0:
             self._add_heading(doc, "PROJECTS", level=1)
 
             for proj in data["projects"]:
@@ -281,15 +283,29 @@ class DocxGenerator:
                     desc_para = doc.add_paragraph(proj["description"])
                     desc_para.paragraph_format.left_indent = Inches(0.25)
 
-                # Technologies
-                if proj.get("technologies"):
+                # Technologies/Tech stack
+                tech_list = proj.get("technologies") or proj.get("tech") or []
+                if tech_list and len(tech_list) > 0:
                     tech_para = doc.add_paragraph()
                     tech_para.paragraph_format.left_indent = Inches(0.25)
                     tech_label = tech_para.add_run("Technologies: ")
                     tech_label.font.size = Pt(10)
                     tech_label.italic = True
-                    tech_list = tech_para.add_run(", ".join(proj["technologies"]))
-                    tech_list.font.size = Pt(10)
+                    tech_text = tech_para.add_run(", ".join(tech_list))
+                    tech_text.font.size = Pt(10)
+
+                # Project URLs
+                if proj.get("liveUrl") or proj.get("githubUrl"):
+                    links_para = doc.add_paragraph()
+                    links_para.paragraph_format.left_indent = Inches(0.25)
+                    links = []
+                    if proj.get("liveUrl"):
+                        links.append(f"Live: {proj['liveUrl']}")
+                    if proj.get("githubUrl"):
+                        links.append(f"GitHub: {proj['githubUrl']}")
+                    links_run = links_para.add_run(" | ".join(links))
+                    links_run.font.size = Pt(9)
+                    links_run.font.color.rgb = RGBColor(0, 102, 204)
 
                 doc.add_paragraph()  # Spacing
 
