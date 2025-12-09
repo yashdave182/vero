@@ -99,7 +99,7 @@
     width: 120px;
     height: 120px;
     margin: 0 auto;
-    background: var(--gradient-primary);
+    background: white;
     border-radius: var(--radius-full);
     display: flex;
     align-items: center;
@@ -107,14 +107,17 @@
     color: var(--text-white);
     font-size: var(--font-size-4xl);
     font-weight: 700;
-    box-shadow: var(--shadow-xl);
+    box-shadow: var(--shadow-lg);
     overflow: hidden;
+    border: 4px solid #4f46e5;
 }
 
-.portfolio-avatar img {
+.portfolio-avatar img,
+.portfolio-avatar-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    display: block;
 }
 
 .portfolio-name {

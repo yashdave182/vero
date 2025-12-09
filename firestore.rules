@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users collection - allow public queries by username for portfolio lookup
+    match /users/{userId} {
+      // Allow all users (authenticated or not) to query by username
+      // This is necessary for public portfolio pages to look up user IDs
+      allow read: if true;
+      // Only the user can update their own profile
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Documents collection - private with optional public sharing
+    match /documents/{documentId} {
+      allow read: if request.auth != null &&
+                     (resource.data.userId == request.auth.uid ||
+                      resource.data.sharing.isPublic == true);
+      allow create: if request.auth != null &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null &&
+                               resource.data.userId == request.auth.uid;
+    }
+
+    // Portfolios collection - public if published
+    match /portfolios/{portfolioId} {
+      // Allow reading if authenticated OR if portfolio is published (for public access)
+      allow read: if request.auth != null ||
+                     resource.data.isPublished == true;
+      // Only owner can write
+      allow write: if request.auth != null &&
+                      request.resource.data.userId == request.auth.uid;
+    }
+
+    // Projects collection - private to authenticated users
+    match /projects/{projectId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+                      request.resource.data.userId == request.auth.uid;
+    }
+
+    // Templates collection - public read, admin write
+    match /templates/{templateId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Activities collection - private to user
+    match /activities/{activityId} {
+      allow read: if request.auth != null &&
+                     resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null &&
+                               resource.data.userId == request.auth.uid;
+    }
+
+    // Suggestions collection - private to user
+    match /suggestions/{suggestionId} {
+      allow read: if request.auth != null &&
+                     resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null &&
+                               resource.data.userId == request.auth.uid;
+    }
+
+    // Analytics collection - private to user, read-only after creation
+    match /analytics/{analyticsId} {
+      allow read: if request.auth != null &&
+                     resource.data.userId == request.auth.uid;
+      allow create: if request.auth != null &&
+                       request.resource.data.userId == request.auth.uid;
+      // Analytics snapshots should not be updated or deleted to maintain historical data
+      allow update, delete: if false;
+    }
+  }
+}

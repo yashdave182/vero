@@ -1,0 +1,56 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Users collection - keep private, only authenticated users can read their own data
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Public username mapping - allows anyone to look up userId by username
+    // This collection should store: { username: 'john', userId: 'abc123' }
+    match /publicProfiles/{username} {
+      // Anyone can read to look up userIds by username
+      allow read: if true;
+      // Only authenticated users can create/update their own public profile
+      allow write: if request.auth != null &&
+                      request.resource.data.userId == request.auth.uid;
+    }
+
+    // Documents collection - private with optional public sharing
+    match /documents/{documentId} {
+      allow read: if request.auth != null &&
+                     (resource.data.userId == request.auth.uid ||
+                      resource.data.sharing.isPublic == true);
+      allow create: if request.auth != null &&
+                       request.resource.data.userId == request.auth.uid;
+      allow update, delete: if request.auth != null &&
+                               resource.data.userId == request.auth.uid;
+    }
+
+    // Portfolios collection - public if published
+    match /portfolios/{portfolioId} {
+      // Allow reading if authenticated OR if portfolio is published (for public access)
+      allow read: if request.auth != null ||
+                     resource.data.isPublished == true;
+      // Only owner can write
+      allow write: if request.auth != null &&
+                      request.resource.data.userId == request.auth.uid;
+    }
+
+    // Projects collection - private to authenticated users
+    match /projects/{projectId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+                      request.resource.data.userId == request.auth.uid;
+    }
+
+    // Templates collection - public read, admin write
+    match /templates/{templateId} {
+      allow read: if true;
+      allow write: if request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}

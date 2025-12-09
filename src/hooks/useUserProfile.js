@@ -17,21 +17,28 @@ export function useUserProfile(userId) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!userId) {
-      setProfile(null);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    let isMounted = true;
+
+    // Initialize loading state in effect for real-time subscription
+    if (isMounted) {
+      setLoading(true);
+      setError(null);
+    }
 
     // Set up real-time listener
     const userRef = doc(db, "users", userId);
+
     const unsubscribe = onSnapshot(
       userRef,
       (docSnap) => {
+        if (!isMounted) return;
+
         if (docSnap.exists()) {
           setProfile({ id: docSnap.id, ...docSnap.data() });
         } else {
@@ -41,14 +48,19 @@ export function useUserProfile(userId) {
         setLoading(false);
       },
       (err) => {
+        if (!isMounted) return;
+
         console.error("Error fetching user profile:", err);
         setError(err.message);
         setLoading(false);
-      }
+      },
     );
 
     // Cleanup subscription on unmount
-    return () => unsubscribe();
+    return () => {
+      isMounted = false;
+      unsubscribe();
+    };
   }, [userId]);
 
   return { profile, loading, error };

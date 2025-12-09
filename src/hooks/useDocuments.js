@@ -37,13 +37,16 @@ export function useDocuments(userId, options = {}) {
 
   const fetchDocuments = useCallback(async () => {
     if (!userId) {
-      setDocuments([]);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setError(null);
+    let isMounted = true;
+
+    // Initialize loading state for real-time subscription
+    // eslint-disable-next-line no-unused-expressions
+    isMounted && setLoading(true);
+    // eslint-disable-next-line no-unused-expressions
+    isMounted && setError(null);
 
     try {
       const documentsRef = collection(db, "documents");
@@ -69,6 +72,8 @@ export function useDocuments(userId, options = {}) {
         const unsubscribe = onSnapshot(
           q,
           (snapshot) => {
+            if (!isMounted) return;
+
             const docs = [];
             snapshot.forEach((doc) => {
               docs.push({ id: doc.id, ...doc.data() });
@@ -77,16 +82,23 @@ export function useDocuments(userId, options = {}) {
             setLoading(false);
           },
           (err) => {
+            if (!isMounted) return;
+
             console.error("Error fetching documents:", err);
             setError(err.message);
             setLoading(false);
-          }
+          },
         );
 
-        return unsubscribe;
+        return () => {
+          isMounted = false;
+          unsubscribe();
+        };
       } else {
         // One-time fetch
         const snapshot = await getDocs(q);
+        if (!isMounted) return;
+
         const docs = [];
         snapshot.forEach((doc) => {
           docs.push({ id: doc.id, ...doc.data() });
@@ -95,12 +107,23 @@ export function useDocuments(userId, options = {}) {
         setLoading(false);
       }
     } catch (err) {
-      console.error("Error fetching documents:", err);
-      setError(err.message);
-      setLoading(false);
+      if (isMounted) {
+        console.error("Error fetching documents:", err);
+        setError(err.message);
+        setLoading(false);
+      }
     }
-  }, [userId, type, status, limitCount, realtime, orderByField, orderDirection]);
+  }, [
+    userId,
+    type,
+    status,
+    limitCount,
+    realtime,
+    orderByField,
+    orderDirection,
+  ]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const unsubscribe = fetchDocuments();
 
@@ -170,31 +193,32 @@ export function useDocumentStats(userId) {
     other: 0,
   });
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    if (!loading && documents) {
-      const newStats = {
-        total: documents.length,
-        resume: 0,
-        proposal: 0,
-        contract: 0,
-        other: 0,
-      };
+    if (loading || !documents) return;
 
-      documents.forEach((doc) => {
-        const type = doc.type?.toLowerCase();
-        if (type === "resume") {
-          newStats.resume++;
-        } else if (type === "proposal") {
-          newStats.proposal++;
-        } else if (type === "contract") {
-          newStats.contract++;
-        } else {
-          newStats.other++;
-        }
-      });
+    const newStats = {
+      total: documents.length,
+      resume: 0,
+      proposal: 0,
+      contract: 0,
+      other: 0,
+    };
 
-      setStats(newStats);
-    }
+    documents.forEach((doc) => {
+      const type = doc.type?.toLowerCase();
+      if (type === "resume") {
+        newStats.resume++;
+      } else if (type === "proposal") {
+        newStats.proposal++;
+      } else if (type === "contract") {
+        newStats.contract++;
+      } else {
+        newStats.other++;
+      }
+    });
+
+    setStats(newStats);
   }, [documents, loading]);
 
   return { stats, loading, error };

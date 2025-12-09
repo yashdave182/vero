@@ -17,6 +17,8 @@ import PortfolioBuilder from "./pages/dashboard/PortfolioBuilder";
 
 import Templates from "./pages/dashboard/Templates";
 
+import TemplateGenerator from "./pages/dashboard/TemplateGenerator";
+
 import AITools from "./pages/dashboard/AITools";
 
 import PublicPortfolio from "./pages/PublicPortfolio";
@@ -96,7 +98,11 @@ function App() {
 
             <Route
               path="/dashboard/templates/:templateId"
-              element={<Templates />}
+              element={
+                <RequireAuth>
+                  <TemplateGenerator />
+                </RequireAuth>
+              }
             />
 
             <Route

@@ -3,6 +3,7 @@ import "./Sidebar.css";
 import { useUser } from "../lib/authContext.jsx";
 import { signOut } from "firebase/auth";
 import { auth } from "../lib/firebase";
+import { getUserAvatar } from "../utils/avatarGenerator";
 
 const menuItems = [
   {
@@ -190,13 +191,11 @@ export default function Sidebar() {
       <div className="sidebar-footer">
         <div className="sidebar-user">
           <div className="avatar">
-            {(() => {
-              const base = (user?.displayName || user?.email || "User").trim();
-              const parts = base.split(" ");
-              const init =
-                parts.length > 1 ? parts[0][0] + parts[1][0] : base[0];
-              return (init || "U").toUpperCase().slice(0, 2);
-            })()}
+            <img
+              src={getUserAvatar(user)}
+              alt={user?.displayName || user?.email || "User"}
+              className="avatar-img"
+            />
           </div>
           <div className="sidebar-user-info">
             <span className="sidebar-user-name">

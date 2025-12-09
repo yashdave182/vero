@@ -13,6 +13,7 @@ import {
   validatePortfolio,
   getPortfolioUrl,
 } from "../../lib/portfolioService";
+import { getUserAvatar } from "../../utils/avatarGenerator";
 
 export default function PortfolioBuilder() {
   const { user } = useUser();
@@ -247,34 +248,79 @@ export default function PortfolioBuilder() {
       <Sidebar />
       <main className="portfolio-builder">
         <div className="builder-header">
-          <div>
-            <h1 className="builder-title">Portfolio Builder</h1>
-            <p className="builder-subtitle">
-              Customize your professional portfolio • {data.projects.length}/3
-              projects
-            </p>
-          </div>
-          <div className="builder-actions">
-            <Button variant="secondary" onClick={handlePreview}>
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
+          <div className="builder-header-content">
+            <div>
+              <h1 className="builder-title">Portfolio Builder</h1>
+              <p className="builder-subtitle">
+                Customize your professional portfolio • {data.projects.length}/3
+                projects
+              </p>
+            </div>
+            <div className="builder-actions">
+              <Button variant="secondary" onClick={handlePreview}>
+                <svg
+                  width="18"
+                  height="18"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle cx="12" cy="12" r="3" />
+                </svg>
+                Preview
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={handleSave}
+                disabled={saving}
               >
-                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-                <circle cx="12" cy="12" r="3" />
-              </svg>
-              Preview
-            </Button>
-            <Button variant="secondary" onClick={handleSave} disabled={saving}>
-              {saving ? "Saving..." : "Save Draft"}
-            </Button>
-            <Button variant="primary" onClick={handlePublish} disabled={saving}>
-              {data.isPublished ? "Update & Publish" : "Publish"}
-            </Button>
+                {saving ? "Saving..." : "Save Draft"}
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handlePublish}
+                disabled={saving}
+              >
+                {data.isPublished ? "Update & Publish" : "Publish"}
+              </Button>
+            </div>
+          </div>
+
+          {/* Portfolio Completion Progress */}
+          <div className="portfolio-completion">
+            <div className="completion-header">
+              <span className="completion-label">Portfolio Completion</span>
+              <span className="completion-percentage">
+                {(() => {
+                  let progress = 0;
+                  if (data.name) progress += 20;
+                  if (data.title) progress += 20;
+                  if (data.bio) progress += 10;
+                  if (data.skills.length > 0) progress += 15;
+                  if (data.projects.length > 0) progress += 35;
+                  return progress;
+                })()}
+                %
+              </span>
+            </div>
+            <div className="completion-bar">
+              <div
+                className="completion-fill"
+                style={{
+                  width: `${(() => {
+                    let progress = 0;
+                    if (data.name) progress += 20;
+                    if (data.title) progress += 20;
+                    if (data.bio) progress += 10;
+                    if (data.skills.length > 0) progress += 15;
+                    if (data.projects.length > 0) progress += 35;
+                    return progress;
+                  })()}%`,
+                }}
+              />
+            </div>
           </div>
         </div>
 
@@ -349,6 +395,9 @@ export default function PortfolioBuilder() {
 
             <section className="editor-section">
               <h2 className="editor-section-title">Skills *</h2>
+              <p className="editor-section-subtitle">
+                Add skills that showcase your expertise.
+              </p>
               <div className="skills-input-row">
                 <Input
                   value={newSkill}
@@ -356,6 +405,19 @@ export default function PortfolioBuilder() {
                   placeholder="Add a skill (e.g. React, Python)..."
                   onKeyPress={(e) =>
                     e.key === "Enter" && (e.preventDefault(), handleAddSkill())
+                  }
+                  icon={
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="16 18 22 12 16 6"></polyline>
+                      <polyline points="8 6 2 12 8 18"></polyline>
+                    </svg>
                   }
                 />
                 <Button variant="secondary" onClick={handleAddSkill}>
@@ -735,7 +797,7 @@ export default function PortfolioBuilder() {
           {/* Preview Panel */}
           <div className="preview-panel">
             <div className="preview-header">
-              <span className="preview-label">Live Preview</span>
+              <span className="preview-label">LIVE PREVIEW</span>
               {profile?.username && (
                 <a
                   href={getPortfolioUrl(profile.username)}
@@ -761,22 +823,21 @@ export default function PortfolioBuilder() {
             </div>
             <div className="preview-content">
               <div className="preview-portfolio">
-                <div className="preview-hero">
-                  <div className="preview-avatar">
-                    {data.name
-                      ? data.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()
-                      : "U"}
+                <div className="preview-profile">
+                  <div className="preview-avatar-container">
+                    <div className="preview-avatar">
+                      <img
+                        src={getUserAvatar(user)}
+                        alt={data.name || user?.displayName || "User"}
+                        className="preview-avatar-img"
+                      />
+                    </div>
                   </div>
-                  <h2 className="preview-name">{data.name || "Your Name"}</h2>
-                  <p className="preview-title">{data.title || "Your Title"}</p>
-                  <p className="preview-bio">
-                    {data.bio || "Your bio will appear here..."}
+                  <h2 className="preview-name">{data.name || "Yash Dave"}</h2>
+                  <p className="preview-title">
+                    {data.title || "AI/ML developer"}
                   </p>
+                  <p className="preview-bio">{data.bio || "idk man"}</p>
                 </div>
 
                 {data.skills.length > 0 && (
@@ -798,25 +859,61 @@ export default function PortfolioBuilder() {
                     <div className="preview-projects">
                       {data.projects.map((project) => (
                         <div key={project.id} className="preview-project-card">
-                          {project.liveUrl ? (
-                            <div className="preview-project-iframe-container">
-                              <iframe
-                                src={project.liveUrl}
-                                className="preview-project-iframe"
-                                title={project.name}
-                                sandbox="allow-scripts allow-same-origin"
-                                loading="lazy"
+                          <div className="preview-project-icon">
+                            <svg
+                              width="32"
+                              height="32"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                            >
+                              <rect
+                                x="3"
+                                y="3"
+                                width="18"
+                                height="18"
+                                rx="2"
+                                stroke="currentColor"
+                                strokeWidth="2"
                               />
-                            </div>
-                          ) : (
-                            <div className="preview-project-placeholder"></div>
-                          )}
-                          <h4 className="preview-project-name">
-                            {project.name || "Project Name"}
-                          </h4>
-                          <p className="preview-project-desc">
-                            {project.description || "Project description..."}
-                          </p>
+                              <path
+                                d="M9 3v18M15 3v18M3 9h18M3 15h18"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                              />
+                            </svg>
+                          </div>
+                          <div className="preview-project-info">
+                            <h4 className="preview-project-name">
+                              {project.name || "Verolabz"}
+                            </h4>
+                            <button className="preview-project-menu">
+                              <svg
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                              >
+                                <circle
+                                  cx="12"
+                                  cy="5"
+                                  r="1.5"
+                                  fill="currentColor"
+                                />
+                                <circle
+                                  cx="12"
+                                  cy="12"
+                                  r="1.5"
+                                  fill="currentColor"
+                                />
+                                <circle
+                                  cx="12"
+                                  cy="19"
+                                  r="1.5"
+                                  fill="currentColor"
+                                />
+                              </svg>
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

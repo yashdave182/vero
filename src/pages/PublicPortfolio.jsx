@@ -10,6 +10,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { incrementPortfolioViews } from "../lib/portfolioService";
+import { generateAvatarUrl } from "../utils/avatarGenerator";
 import "./PublicPortfolio.css";
 
 export default function PublicPortfolio() {
@@ -120,15 +121,6 @@ export default function PublicPortfolio() {
     return null;
   }
 
-  const getInitials = (name) => {
-    if (!name) return "?";
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
-
   return (
     <div className="public-portfolio">
       {/* Header */}
@@ -139,11 +131,11 @@ export default function PublicPortfolio() {
         <div className="header-content">
           <div className="avatar-wrapper">
             <div className="portfolio-avatar">
-              {userProfile?.photoURL ? (
-                <img src={userProfile.photoURL} alt={portfolio.name} />
-              ) : (
-                getInitials(portfolio.name)
-              )}
+              <img
+                src={generateAvatarUrl(userProfile?.id || username)}
+                alt={portfolio.name}
+                className="portfolio-avatar-img"
+              />
             </div>
           </div>
           <h1 className="portfolio-name">{portfolio.name}</h1>
